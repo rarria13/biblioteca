@@ -333,13 +333,16 @@ function renderIdea(){
 
 /* ---------- línea de tiempo ---------- */
 function stageFor(y){return META.stages.filter(s=>y>=s.from&&y<=s.to).map(s=>s.label).join(' · ')}
+let tlMode='pub';
 function renderTimeline(main,list){
-  const m=new Map(); list.forEach(b=>{const y=readYear(b)||'Sin año';(m.get(y)||m.set(y,[]).get(y)).push(b)});
+  const yOf=b=>tlMode==='pub'?(String(b.y).match(/\d{4}/)||[''])[0]:readYear(b);
+  const m=new Map(); list.forEach(b=>{const y=yOf(b)||'Sin año';(m.get(y)||m.set(y,[]).get(y)).push(b)});
   const years=[...m.keys()].sort((a,b)=>a==='Sin año'?1:b==='Sin año'?-1:a-b);
   let lastStage='';
-  main.innerHTML=`<div class="tl">${years.map(y=>{const st=y==='Sin año'?'':stageFor(+y);const head=st&&st!==lastStage?`<div class="tstage">${esc(st)}</div>`:'';lastStage=st||lastStage;
+  main.innerHTML=`<div class="tl"><div class="ltabs" style="margin:0 0 14px"><button class="ltab" aria-pressed="${tlMode==='pub'}" onclick="tlMode='pub';render()">Por año de publicación</button><button class="ltab" aria-pressed="${tlMode==='read'}" onclick="tlMode='read';render()">Por año en que lo leí</button></div>
+    ${years.map(y=>{const st=(tlMode==='read'&&y!=='Sin año')?stageFor(+y):'';const head=st&&st!==lastStage?`<div class="tstage">${esc(st)}</div>`:'';lastStage=st||lastStage;
     return `${head}<div class="tyear"><div class="tdot"></div><div class="tbody"><h2>${esc(y)} <small>${m.get(y).length}</small></h2><div class="rack">${m.get(y).sort((a,b)=>a.t.localeCompare(b.t,'es')).map(bookEl).join('')}</div></div></div>`}).join('')}
-    ${OWNER?`<p class="note">Las etapas se editan desde <b>Listas → Etapas de vida</b>. El año de lectura de cada libro se cambia con Editar (campo "Año en que lo leí").</p>`:''}</div>`;
+    ${OWNER&&tlMode==='read'?`<p class="note">Las etapas se editan desde <b>Listas → Etapas de vida</b>. El año de lectura de cada libro se cambia con Editar (campo "Año en que lo leí").</p>`:''}</div>`;
 }
 
 /* ---------- estadísticas ---------- */
