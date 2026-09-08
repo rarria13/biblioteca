@@ -543,10 +543,10 @@ function ownerBlock(b,id){
     <div class="vrow"><textarea id="notein" placeholder="Nueva nota: escribe o dicta con el micrófono"></textarea><button class="btn mic" onclick="mic('notein')" title="Dictar con voz">🎤</button></div>
     <div class="p-actions"><button class="btn primary" onclick="addNote(${id})">Agregar nota</button>
       <button class="btn" onclick="edit(${id})">Editar ficha</button>
-      <button class="btn" onclick="listsForBook(${id})">Listas</button>
-      <button class="btn" onclick="retryCover(${id})" title="Vuelve a buscar la portada en Google Books y Open Library">Buscar portada</button>
-      <button class="btn" onclick="googleCover(${id})" title="Abre Google Imágenes; luego arrastra o pega aquí la imagen">Portada en Google</button></div>
-    <p class="note">Para poner una portada desde Google: abre <b>Portada en Google</b>, y arrastra la imagen elegida hasta esta ficha o cópiala y pégala aquí (Ctrl+V / Cmd+V).</p>
+      <button class="btn" onclick="listsForBook(${id})">Listas</button></div>
+    <h4>Portada</h4>
+    <div class="buy"><button class="btn primary" onclick="retryCover(${id})" title="Busca automáticamente en Google Books y Open Library">Buscar automática</button>${PORTALS.map(p=>`<button class="btn" onclick="portalCover(${id},'${p.id}')">${p.name}</button>`).join('')}</div>
+    <p class="note">La automática la guarda sola. Los portales abren la búsqueda del libro en otra pestaña: arrastra la portada hasta esta ficha, o cópiala y pégala aquí (Ctrl+V / Cmd+V), y queda guardada al instante.</p>
   </div>`;
 }
 function addNote(id){const x=document.getElementById('notein').value.trim();if(!x)return;const b=BOOKS[id];upd(b,{notes:(b.notes||[]).concat([{d:today(),x}])});openBook(id);toast('Nota guardada')}
@@ -629,6 +629,15 @@ function mic(targetId){
 }
 
 /* ---------- portadas ---------- */
+const PORTALS=[
+  {id:'google',name:'Google Imágenes',url:q=>'https://www.google.com/search?tbm=isch&q='+encodeURIComponent(q+' portada libro')},
+  {id:'amazon',name:'Amazon',url:q=>'https://www.amazon.com.mx/s?k='+encodeURIComponent(q)+'&i=stripbooks'},
+  {id:'buscalibre',name:'Buscalibre',url:q=>'https://www.buscalibre.com.mx/libros/search?q='+encodeURIComponent(q)},
+  {id:'bookdelivery',name:'Book Delivery',url:q=>'https://www.bookdelivery.mx/search?q='+encodeURIComponent(q)},
+  {id:'hotmart',name:'Hotmart',url:q=>'https://hotmart.com/es/marketplace/productos?q='+encodeURIComponent(q)},
+  {id:'audible',name:'Audible',url:q=>'https://www.audible.com/search?keywords='+encodeURIComponent(q)},
+];
+function portalCover(id,pid){const b=BOOKS[id];const q=(clean(b.t)+' '+(/por confirmar/i.test(b.a)?'':b.a.split(/ y |,| con /)[0])).trim();const p=PORTALS.find(x=>x.id===pid);window.open(p.url(q),'_blank')}
 function googleCover(id){const b=BOOKS[id];window.open('https://www.google.com/search?tbm=isch&q='+encodeURIComponent('"'+clean(b.t)+'" '+(/por confirmar/i.test(b.a)?'':b.a)+' portada libro'),'_blank')}
 async function retryCover(id){const b=BOOKS[id];delete cache[b.t];const old=b.img;if(!(b.src||'').match(/físicos|Audible/)||!old)b.img=null;await findCover(b);if(!b.img){b.img=old;alert('No se encontró portada en Google Books ni en Open Library. Usa "Portada en Google" y arrastra o pega la imagen aquí.')}else{upd(b,{img:b.img});render();openBook(id)}}
 function setCoverFromImage(b,src,id){
@@ -650,12 +659,14 @@ function coverFromTransfer(dt,id){
 const panelEl=document.getElementById('panel');
 panelEl.addEventListener('dragover',e=>{if(OWNER&&currentId!=null){e.preventDefault();panelEl.style.outline='3px dashed var(--gold)'}});
 panelEl.addEventListener('dragleave',()=>panelEl.style.outline='');
-panelEl.addEventListener('drop',e=>{panelEl.style.outline='';if(!OWNER||currentId==null)return;e.preventDefault();coverFromTransfer(e.dataTransfer,currentId)});
-document.addEventListener('paste',e=>{if(!OWNER||currentId==null||!panelEl.classList.contains('on'))return;if(e.target.matches('input,textarea'))return;if(coverFromTransfer(e.clipboardData,currentId))e.preventDefault()});
+panelEl.addEventListener('drop',e=>{panelEl.style.outline='';if(!OWNER||currentId==null)return;e.preventDefault();if(document.getElementById('bform')){coverIntoForm(e.dataTransfer)}else coverFromTransfer(e.dataTransfer,currentId)});
+function coverIntoForm(dt){const f=document.getElementById('bform');const set=src=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{let d=src;try{const cv=document.createElement('canvas');const W=180,H=Math.round(180*im.height/im.width);cv.width=W;cv.height=H;cv.getContext('2d').drawImage(im,0,0,W,H);d=cv.toDataURL('image/jpeg',.75)}catch(e){}f.dataset.img=d;document.getElementById('fcover').className='p-cover';document.getElementById('fcover').innerHTML=`<img src="${d}">`;toast('Portada lista: guarda los cambios')};im.onerror=()=>{if(/^data:/.test(src))return;f.dataset.img=src;document.getElementById('fcover').innerHTML=`<img src="${src}">`};im.src=src};const file=[...(dt.files||[])].find(x=>x.type.startsWith('image/'));if(file){const r=new FileReader();r.onload=()=>set(r.result);r.readAsDataURL(file);return}const html=dt.getData('text/html');const mm=html&&html.match(/<img[^>]+src="([^"]+)"/i);const url=(mm&&mm[1])||dt.getData('text/uri-list')||dt.getData('text/plain');if(url&&/^(https?:|data:)/.test(url.trim()))set(url.trim().replace(/&amp;/g,'&'))}
+document.addEventListener('paste',e=>{if(!OWNER||currentId==null||!panelEl.classList.contains('on'))return;if(e.target.matches('input,textarea'))return;if(document.getElementById('bform')){coverIntoForm(e.clipboardData);e.preventDefault();return}if(coverFromTransfer(e.clipboardData,currentId))e.preventDefault()});
 
 /* ---------- editar / agregar ---------- */
 function field(l,name,val){return `<div><label>${l}</label><input name="${name}" value="${esc(val||'')}"></div>`}
 function edit(id){
+  currentId=id==null?-1:id;
   const b=id==null?{t:'',a:'',y:'',c:'',cg:'Por clasificar',s:'Por clasificar',src:'Agregado desde la biblioteca',d:'',k:[]}:BOOKS[id];
   const opts=(arr,v)=>arr.map(o=>`<option ${o===v?'selected':''}>${esc(o)}</option>`).join('');
   document.getElementById('pcontent').innerHTML=`
@@ -671,7 +682,7 @@ function edit(id){
       ${field('Subcategoría / tema','c',b.c)}${field('Origen','src',b.src)}
       <div class="full"><label>De qué trata</label><div class="vrow"><textarea name="d" id="ed_d">${esc(b.d||'')}</textarea><button class="btn mic" onclick="mic('ed_d')">🎤</button></div></div>
       <div class="full"><label>Los 3 aprendizajes (uno por línea)</label><div class="vrow"><textarea name="k" id="ed_k">${esc((b.k||[]).join('\n'))}</textarea><button class="btn mic" onclick="mic('ed_k')">🎤</button></div></div>
-      <div class="full"><label>Portada (foto o imagen)</label><input type="file" name="img" accept="image/*"></div>
+      <div class="full"><label>Portada (foto o imagen)</label><input type="file" name="img" accept="image/*">${id==null?'':`<div class="buy" style="margin-top:8px">${PORTALS.map(p=>`<button class="btn small" type="button" onclick="portalCover(${id},'${p.id}')">${p.name}</button>`).join('')}</div><p class="note">Abre el portal, arrastra o pega la portada sobre esta ficha y se guarda.</p>`}</div>
     </form>
     <div class="p-actions">
       <button class="btn primary" onclick="commit(${id})">Guardar cambios</button>
