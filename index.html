@@ -361,7 +361,7 @@ function renderFeatured(){
 function renderGoal(){
   const g=META.goal, el=document.getElementById('goal'); if(!g||!g.target){el.innerHTML='';return}
   const n=BOOKS.filter(b=>b.s==='Leído'&&((b.de||'').startsWith(String(g.year))||(!b.de&&readYear(b)===String(g.year)))).length;
-  el.innerHTML=`<div class="gt"><span>Reto de lectura ${esc(g.year)}</span><b>${n} de ${g.target} libros</b></div><div class="gb"><div class="gf" style="width:${Math.min(100,Math.round(n/g.target*100))}%"></div></div>`;
+  el.innerHTML=`<div class="gt"><span>Reto de lectura ${esc(g.year)}</span><b>${n} de ${g.target} libros</b></div><div class="gb"><div class="gf" style="width:${Math.min(100,Math.round(n/g.target*100))}%"></div></div><div class="buy" style="margin-top:10px"><button onclick="shareImage('goal')">Crear imagen para publicar</button></div>`;
 }
 function renderStrip(){
   const el=document.getElementById('strip'); if(!el)return;
@@ -508,6 +508,7 @@ function openBook(id){
       <div class="buy">
         <button onclick="share(${id})">Compartir</button>
         <button onclick="copy(bookUrl(BOOKS[${id}]))">Copiar enlace</button>
+        <button onclick="shareImage('book',${id})">Imagen para publicar</button>
         <a target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(shareText(b))}">WhatsApp</a>
         <a target="_blank" rel="noopener" href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(bookUrl(b))}">LinkedIn</a>
       </div>
@@ -536,6 +537,45 @@ function addNote(id){const x=document.getElementById('notein').value.trim();if(!
 function delNote(id,i){const b=BOOKS[id];const n=(b.notes||[]).slice();n.splice(i,1);upd(b,{notes:n});openBook(id)}
 document.getElementById('pcontent').addEventListener('click',e=>{const rb=e.target.closest('.related [data-id]');if(rb){openBook(+rb.dataset.id);return}const s=e.target.closest('.stars.edit span');if(s){const id=+s.closest('.rating').dataset.id;const r=+s.dataset.r;upd(BOOKS[id],{r:BOOKS[id].r===r?0:r});render();openBook(id)}});
 
+/* ---------- imagen para redes (álbum de fotos) ---------- */
+function loadImg(src){return new Promise(res=>{const im=new Image();if(!/^data:/.test(src))im.crossOrigin='anonymous';im.onload=()=>res(im);im.onerror=()=>res(null);im.src=src})}
+function wrapText(ctx,text,x,y,maxW,lh,maxLines){const words=text.split(' ');let line='',lines=[];for(const w of words){const t=line?line+' '+w:w;if(ctx.measureText(t).width>maxW&&line){lines.push(line);line=w}else line=t}lines.push(line);if(maxLines&&lines.length>maxLines){lines=lines.slice(0,maxLines);lines[maxLines-1]=lines[maxLines-1].replace(/\s*\S*$/,'')+'…'}lines.forEach((l,i)=>ctx.fillText(l,x,y+i*lh));return y+lines.length*lh}
+async function shareImage(kind,id){
+  const W=1080,H=1350,cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');
+  const NAVY='#0d1e45',GOLD='#F5C800',CREAM='#f4f1e6',MUTE='#aeb8d6';
+  c.fillStyle=NAVY;c.fillRect(0,0,W,H);
+  const g=c.createRadialGradient(W*.85,-100,50,W*.85,-100,900);g.addColorStop(0,'rgba(245,200,0,.18)');g.addColorStop(1,'rgba(245,200,0,0)');c.fillStyle=g;c.fillRect(0,0,W,H);
+  const av=await loadImg(document.querySelector('.avatar').src);
+  const drawAvatar=(x,y,r)=>{if(!av)return;c.save();c.beginPath();c.arc(x,y,r,0,7);c.closePath();c.clip();c.drawImage(av,x-r,y-r,r*2,r*2);c.restore();c.lineWidth=6;c.strokeStyle=GOLD;c.beginPath();c.arc(x,y,r,0,7);c.stroke()};
+  const drawCover=async(b,x,y,w)=>{const hh=w*1.5;c.save();c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=30;c.shadowOffsetY=14;c.fillStyle='#132a5e';c.fillRect(x,y,w,hh);c.restore();const im=b.img?await loadImg(b.img):null;if(im){c.drawImage(im,x,y,w,hh)}else{c.fillStyle=GOLD;c.fillRect(x,y,8,hh);c.fillStyle=CREAM;c.font=`${Math.round(w*.11)}px Georgia,serif`;wrapText(c,b.t,x+22,y+40,w-40,Math.round(w*.13),6)}};
+  if(kind==='goal'){
+    const gl=META.goal;const yr=String(gl.year);const done=BOOKS.filter(b=>b.s==='Leído'&&((b.de||'').startsWith(yr)||(!b.de&&readYear(b)===yr)));
+    drawAvatar(120,130,70);c.fillStyle=CREAM;c.font='300 34px Georgia,serif';c.fillText('Rafael Arria',220,118);c.fillStyle=MUTE;c.font='26px Helvetica,Arial,sans-serif';c.fillText('Biblioteca personal',220,158);
+    c.fillStyle=CREAM;c.font='300 84px Georgia,serif';c.fillText('Reto de lectura '+yr,70,320);
+    c.fillStyle=GOLD;c.font='600 150px Georgia,serif';c.fillText(String(done.length),70,480);c.fillStyle=CREAM;c.font='300 60px Georgia,serif';c.fillText(`de ${gl.target} libros`,70+c.measureText('  ').width+ (c.font='600 150px Georgia,serif',c.measureText(String(done.length)).width)+20,480);
+    c.fillStyle='rgba(255,255,255,.12)';c.fillRect(70,520,W-140,18);c.fillStyle=GOLD;c.fillRect(70,520,Math.min(1,done.length/gl.target)*(W-140),18);
+    const covers=done.filter(b=>b.img).concat(done.filter(b=>!b.img)).slice(0,12);const cw=210,gap=22,cols=4;let x=70,y=600;
+    for(let i=0;i<covers.length;i++){await drawCover(covers[i],x+(i%cols)*(cw+gap),y+Math.floor(i/cols)*(cw*1.5+gap),cw)}
+    if(!covers.length){c.fillStyle=MUTE;c.font='300 40px Georgia,serif';c.fillText('Los primeros libros del año, en camino.',70,680)}
+    c.fillStyle=MUTE;c.font='26px Helvetica,Arial,sans-serif';c.fillText('rarria13.github.io/biblioteca',70,H-60);
+  }else{
+    const b=BOOKS[id];
+    drawAvatar(120,130,70);c.fillStyle=CREAM;c.font='300 34px Georgia,serif';c.fillText('Rafael Arria',220,118);c.fillStyle=MUTE;c.font='26px Helvetica,Arial,sans-serif';c.fillText(b.s==='Leído'?'Lo que me dejó este libro':'De mi biblioteca',220,158);
+    await drawCover(b,70,240,360);
+    c.fillStyle=CREAM;c.font='600 54px Georgia,serif';let yy=wrapText(c,b.t,480,300,530,62,4);
+    c.fillStyle=MUTE;c.font='30px Helvetica,Arial,sans-serif';yy=wrapText(c,b.a,480,yy+18,530,38,2);
+    if(b.r){c.fillStyle=GOLD;c.font='40px Helvetica,Arial,sans-serif';c.fillText('★'.repeat(b.r),480,yy+40)}
+    let ky=860;c.fillStyle=GOLD;c.font='600 26px Helvetica,Arial,sans-serif';c.fillText('TRES APRENDIZAJES',70,ky);ky+=40;
+    (b.k||[]).slice(0,3).forEach((k,i)=>{c.fillStyle=GOLD;c.beginPath();c.arc(92,ky+8,22,0,7);c.fill();c.fillStyle=NAVY;c.font='600 26px Helvetica,Arial,sans-serif';c.fillText(String(i+1),84,ky+17);c.fillStyle=CREAM;c.font='300 36px Georgia,serif';ky=wrapText(c,k,140,ky+20,W-210,44,3)+34});
+    c.fillStyle=MUTE;c.font='26px Helvetica,Arial,sans-serif';c.fillText('rarria13.github.io/biblioteca',70,H-60);
+  }
+  let blob=await new Promise(r=>{try{cv.toBlob(r,'image/png')}catch(e){r(null)}});
+  if(!blob){toast('Alguna portada externa bloqueó la imagen; reintento sin ella');return shareImageSafe(kind,id)}
+  const file=new File([blob],(kind==='goal'?'reto-lectura':'libro')+'.png',{type:'image/png'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Biblioteca de Rafael Arria'});return}catch(e){}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click();toast('Imagen descargada: guárdala en tu álbum y publícala');
+}
+async function shareImageSafe(kind,id){const backup=BOOKS.map(b=>b.img);BOOKS.forEach(b=>{if(b.img&&!/^data:/.test(b.img))b.img=null});try{await shareImage(kind,id)}finally{BOOKS.forEach((b,i)=>b.img=backup[i])}}
 /* ---------- voz a texto ---------- */
 let rec=null;
 function mic(targetId){
