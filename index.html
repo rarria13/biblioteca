@@ -116,7 +116,7 @@ section.shelf{margin:34px 0 0}
 .book{position:relative;width:100%;aspect-ratio:2/3;border:0;padding:0;border-radius:4px;background:var(--navy);color:var(--hero-ink);cursor:pointer;text-align:left;box-shadow:0 1px 2px rgba(13,30,69,.12),0 10px 22px -10px rgba(13,30,69,.35);transition:transform .18s ease,box-shadow .18s ease;overflow:hidden}
 .book:hover,.book:focus-visible{transform:translateY(-4px);box-shadow:0 2px 4px rgba(13,30,69,.14),0 20px 30px -12px rgba(13,30,69,.45)}
 .book img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.book .spine{position:absolute;inset:0;padding:14px 12px 12px;display:flex;flex-direction:column;justify-content:space-between;border-left:6px solid rgba(255,255,255,.85);color:#fff}
+.book .spine{position:absolute;inset:0;padding:14px 12px 12px;display:flex;flex-direction:column;justify-content:space-between;border-left:6px solid var(--gold);color:#fff}
 .book .spine .t{font-family:Fraunces,serif;font-weight:400;font-size:15px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
 .book .spine .a{font-size:11px;color:rgba(255,255,255,.8);margin-top:8px}
 .book.cov .spine{display:none}
@@ -378,7 +378,7 @@ function groups(list){
 }
 
 /* ---------- render ---------- */
-function bookEl(b){return `<button class="book ${b.s==='Leído'?'leido':''} ${b.img?'cov':''}" data-id="${b.id}" title="${esc(b.t)}" style="${b.img?'':'background:'+(CATCOL[b.cg]||'#0d1e45')}">${b.img?`<img src="${b.img}" alt="" loading="lazy">`:''}
+function bookEl(b){return `<button class="book ${b.s==='Leído'?'leido':''} ${b.img?'cov':''}" data-id="${b.id}" title="${esc(b.t)}" style="${b.img?'':'background:#0d1e45'}">${b.img?`<img src="${b.img}" alt="" loading="lazy">`:''}
         ${isTop(b)?'<span class="topmark">★</span>':''}${OWNER?`<span class="camb" data-cam="${b.id}" title="Poner portada: toca para elegir imagen, o arrastra una imagen aquí">📷</span><span class="yrb ${(yearList()||{books:[]}).books.includes(b.uid)?'on':''}" data-yr="${b.id}" title="${(yearList()||{books:[]}).books.includes(b.uid)?t('Quitar de 2026'):t('Leer en 2026')}">${(yearList()||{books:[]}).books.includes(b.uid)?'−':'＋'}</span>`:''}<span class="spine"><span class="t">${esc(b.t)}</span><span class="a">${esc(b.a.split(' y ')[0].split(',')[0])}</span></span></button>`}
 function byUid(u){return BOOKS.find(b=>b.uid===u)}
 function renderFeatured(){
@@ -492,7 +492,7 @@ function renderStats(main){
   main.innerHTML=`<div class="sgrid">
     <div class="scard"><h3>${t("Libros leídos por año")}</h3>${years.map(([y,n])=>bar(y,n,mx(years))).join('')}</div>
     <div class="scard"><h3>Terminados por mes en ${yr}</h3>${byM.map(([m,n])=>bar(m,n,mx(byM))).join('')}${avgDays?`<p class="note" style="margin-top:10px">Promedio: ${avgDays} días por libro (en los ${withDates.length} con fechas de inicio y fin).</p>`:'<p class="note" style="margin-top:10px">Captura "Empecé" y "Lo terminé" en cada libro (Editar) para ver ritmo y promedio de días.</p>'}</div>
-    <div class="scard"><h3>${t("Por categoría")}</h3><p class="note" style="margin:0 0 8px">${t("Color del lomo cuando el libro no tiene portada")}:</p>${catsS.map(([c,n])=>`<div class="brow"><span class="bl"><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${CATCOL[c]||'#0d1e45'};margin-right:6px"></i>${esc(c)}</span><div class="bt"><div class="bf" style="width:${Math.round(n/mx(catsS)*100)}%;background:${CATCOL[c]||'#0d1e45'}"></div></div><span class="bn">${n}</span></div>`).join('')}</div>
+    <div class="scard"><h3>${t("Por categoría")}</h3>${catsS.map(([c,n])=>`<div class="brow"><span class="bl"><i style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${CATCOL[c]||'#0d1e45'};margin-right:6px"></i>${esc(c)}</span><div class="bt"><div class="bf" style="width:${Math.round(n/mx(catsS)*100)}%;background:${CATCOL[c]||'#0d1e45'}"></div></div><span class="bn">${n}</span></div>`).join('')}</div>
     <div class="scard"><h3>${t("Autores más repetidos")}</h3>${auths.map(([a,n])=>bar(a,n,mx(auths),'a')).join('')}</div>
     <div class="scard"><h3>${t("La colección")}</h3>
       ${[...byS.entries()].map(([s,n])=>bar(s,n,BOOKS.length,'s')).join('')}
@@ -533,7 +533,7 @@ function openBook(id){
   const rel=related(b);
   document.getElementById('pcontent').innerHTML=`<div class="p-grid">
     <div class="p-side">
-      <div class="p-cover" style="${b.img?'':'background:'+(CATCOL[b.cg]||'#0d1e45')}">${b.img?`<img src="${b.img}" alt="">`:`<div class="spine">${esc(b.t)}</div>`}</div>
+      <div class="p-cover" style="${b.img?'':'background:#0d1e45'}">${b.img?`<img src="${b.img}" alt="">`:`<div class="spine">${esc(b.t)}</div>`}</div>
       <div>
       <div class="rating" data-id="${id}">${stars(b.r,OWNER)} ${b.again?'<span class="again">${t("Lo releería")}</span>':''}${OWNER?`<button class="btn tiny ${b.again?'on':''}" onclick="upd(BOOKS[${id}],{again:${!b.again}});render();openBook(${id})">${b.again?'✓ Lo releería':'¿Lo releerías?'}</button>`:''}</div>
       <div class="meta">
@@ -598,7 +598,7 @@ async function shareImage(kind,id){
   const g=c.createRadialGradient(W*.85,-100,50,W*.85,-100,900);g.addColorStop(0,'rgba(245,200,0,.18)');g.addColorStop(1,'rgba(245,200,0,0)');c.fillStyle=g;c.fillRect(0,0,W,H);
   const av=await loadImg(document.querySelector('.avatar').src);
   const drawAvatar=(x,y,r)=>{if(!av)return;c.save();c.beginPath();c.arc(x,y,r,0,7);c.closePath();c.clip();c.drawImage(av,x-r,y-r,r*2,r*2);c.restore();c.lineWidth=6;c.strokeStyle=GOLD;c.beginPath();c.arc(x,y,r,0,7);c.stroke()};
-  const drawCover=async(b,x,y,w)=>{const hh=w*1.5;c.save();c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=30;c.shadowOffsetY=14;c.fillStyle='#132a5e';c.fillRect(x,y,w,hh);c.restore();const im=b.img?await loadImg(b.img):null;if(im){c.drawImage(im,x,y,w,hh)}else{c.fillStyle=GOLD;c.fillRect(x,y,8,hh);c.fillStyle=CREAM;c.font=`${Math.round(w*.11)}px Georgia,serif`;wrapText(c,b.t,x+22,y+40,w-40,Math.round(w*.13),6)}};
+  const drawCover=async(b,x,y,w)=>{const hh=w*1.5;c.save();c.shadowColor='rgba(0,0,0,.5)';c.shadowBlur=30;c.shadowOffsetY=14;c.fillStyle='#0d1e45';c.fillRect(x,y,w,hh);c.restore();const im=b.img?await loadImg(b.img):null;if(im){c.drawImage(im,x,y,w,hh)}else{c.fillStyle=GOLD;c.fillRect(x,y,8,hh);c.fillStyle=CREAM;c.font=`${Math.round(w*.11)}px Georgia,serif`;wrapText(c,b.t,x+22,y+40,w-40,Math.round(w*.13),6)}};
   if(kind==='goal'){
     const gl=META.goal;const yr=String(gl.year);const L=yearList();const items=L?L.books.map(byUid).filter(Boolean):[];const done=items.filter(b=>b.s==='Leído');gl.target=items.length||gl.target||0;
     drawAvatar(120,130,70);c.fillStyle=CREAM;c.font='300 34px Georgia,serif';c.fillText('Rafael Arria',220,118);c.fillStyle=MUTE;c.font='26px Helvetica,Arial,sans-serif';c.fillText('Biblioteca personal',220,158);
