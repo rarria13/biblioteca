@@ -552,7 +552,7 @@ async function shareImage(kind,id){
     const gl=META.goal;const yr=String(gl.year);const done=BOOKS.filter(b=>b.s==='Leído'&&((b.de||'').startsWith(yr)||(!b.de&&readYear(b)===yr)));
     drawAvatar(120,130,70);c.fillStyle=CREAM;c.font='300 34px Georgia,serif';c.fillText('Rafael Arria',220,118);c.fillStyle=MUTE;c.font='26px Helvetica,Arial,sans-serif';c.fillText('Biblioteca personal',220,158);
     c.fillStyle=CREAM;c.font='300 84px Georgia,serif';c.fillText('Reto de lectura '+yr,70,320);
-    c.fillStyle=GOLD;c.font='600 150px Georgia,serif';c.fillText(String(done.length),70,480);c.fillStyle=CREAM;c.font='300 60px Georgia,serif';c.fillText(`de ${gl.target} libros`,70+c.measureText('  ').width+ (c.font='600 150px Georgia,serif',c.measureText(String(done.length)).width)+20,480);
+    c.fillStyle=GOLD;c.font='600 150px Georgia,serif';c.fillText(String(done.length),70,480);const nw=c.measureText(String(done.length)).width;c.fillStyle=CREAM;c.font='300 60px Georgia,serif';c.fillText(`de ${gl.target} libros`,70+nw+28,480);
     c.fillStyle='rgba(255,255,255,.12)';c.fillRect(70,520,W-140,18);c.fillStyle=GOLD;c.fillRect(70,520,Math.min(1,done.length/gl.target)*(W-140),18);
     const covers=done.filter(b=>b.img).concat(done.filter(b=>!b.img)).slice(0,12);const cw=210,gap=22,cols=4;let x=70,y=600;
     for(let i=0;i<covers.length;i++){await drawCover(covers[i],x+(i%cols)*(cw+gap),y+Math.floor(i/cols)*(cw*1.5+gap),cw)}
