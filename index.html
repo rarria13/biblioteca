@@ -348,11 +348,11 @@ let EDITS={upd:{},add:[],del:[],meta:null}; try{EDITS=Object.assign(EDITS,JSON.p
   if(EDITS.meta) Object.assign(META,EDITS.meta);
 })();
 reindex();
-function saveEdits(){ try{localStorage.setItem(EK,JSON.stringify(EDITS))}catch(e){} markDirty(); schedulePublish(); }
+function saveEdits(){ try{localStorage.setItem(EK,JSON.stringify(EDITS))}catch(e){alert('El navegador ya no tiene espacio para guardar más cambios localmente. Publica en el sitio o descarga el archivo ahora para no perderlos.')} markDirty(); schedulePublish(); }
 function saveMeta(){ EDITS.meta={lists:META.lists,stages:META.stages,goal:META.goal,pin:META.pin,ai:META.ai}; saveEdits(); }
 function upd(b,ch){ Object.assign(b,ch); const ai=EDITS.add.findIndex(x=>x.uid===b.uid); if(ai>=0) Object.assign(EDITS.add[ai],ch); else EDITS.upd[b.uid]=Object.assign(EDITS.upd[b.uid]||{},ch); saveEdits(); }
 function nChanges(){return Object.keys(EDITS.upd).length+EDITS.add.length+EDITS.del.length+(EDITS.meta?1:0)}
-function markDirty(){ const n=nChanges(); const s=document.getElementById('savecov'); if(!s)return; s.classList.toggle('dirty',n>0); s.textContent=n>0?`Guardar biblioteca (${n} cambio${n>1?'s':''} sin fijar)`:'Guardar biblioteca'; const sb=document.getElementById('savebar'); if(sb){sb.classList.toggle('on',n>0); if(!publishTimer||!ghToken()||!localStorage.getItem('bib_autopub'))document.getElementById('savemsg').textContent=`${n} cambio${n>1?'s':''} guardado${n>1?'s':''} en este navegador.`} }
+function markDirty(){ const n=nChanges(); const s=document.getElementById('savecov'); if(!s)return; s.classList.toggle('dirty',n>0); s.textContent=n>0?`Guardar biblioteca (${n} cambio${n>1?'s':''} sin fijar)`:'Guardar biblioteca'; const sb=document.getElementById('savebar'); if(sb){sb.classList.toggle('on',n>0); if(!publishTimer||!ghToken()||!localStorage.getItem('bib_autopub'))document.getElementById('savemsg').textContent=ghToken()?`${n} cambio${n>1?'s':''} guardado${n>1?'s':''} en este navegador. Toca Publicar para subirlos al sitio.`:`${n} cambio${n>1?'s':''} guardado${n>1?'s':''} solo en este navegador. Para que queden en la página: Listas y ajustes → Publicar directo al sitio.`} }
 
 /* ---------- modo dueño ---------- */
 let OWNER=localStorage.getItem('bib_owner')==='1';
