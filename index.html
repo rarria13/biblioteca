@@ -261,16 +261,7 @@ footer a{color:var(--ink);font-weight:600;text-decoration:none}
         <p data-t="Como empresario, los libros me han dado herramientas y habilidades para tomar mejores decisiones. En lo personal, han mejorado mi entendimiento sobre desarrollo personal, salud, finanzas e inversiones y relaciones; me han permitido disfrutar de una mejor calidad de vida y han construido la autoconfianza para crecer en el camino que me ha tocado vivir: como padre de familia, en el emprendimiento y en mi salud física y mental.">Como empresario, los libros me han dado herramientas y habilidades para tomar mejores decisiones. En lo personal, han mejorado mi entendimiento sobre desarrollo personal, salud, finanzas e inversiones y relaciones; me han permitido disfrutar de una mejor calidad de vida y han construido la autoconfianza para crecer en el camino que me ha tocado vivir: como padre de familia, en el emprendimiento y en mi salud física y mental.</p>
       </details>
       <div class="hero-nums" id="stats"></div>
-    <div><b>231</b><span>leídos</span></div>
-    <div><b>248</b><span>autores</span></div>
-    <div><b>14</b><span>categorías</span></div></div>
-    <div><b>232</b><span>leídos</span></div>
-    <div><b>248</b><span>autores</span></div>
-    <div><b>14</b><span>categorías</span></div></div>
-    <div><b>232</b><span>leídos</span></div>
-    <div><b>248</b><span>autores</span></div>
-    <div><b>14</b><span>categorías</span></div></div>
-      <div class="goal" id="goal"></div><p class="note" style="color:var(--hero-mute)">Toca el ＋ de cualquier libro del estante para sumarlo a la lista.</p></div><p class="note" style="color:var(--hero-mute)">Toca el ＋ de cualquier libro del estante para sumarlo a la lista.</p><p class="note" style="color:var(--hero-mute)">Toca el ＋ de cualquier libro del estante para sumarlo a la lista.</p>
+      <div class="goal" id="goal"></div>
     
   
   <div class="strip"><div class="strip-fade l"></div><div class="strip-in" id="strip"></div><div class="strip-fade r"></div></div>
@@ -1118,10 +1109,30 @@ markDirty();
 function buildFile(){
   const data=BOOKS.map(b=>{const o={...b};delete o.id;delete o.col;return o});
   const meta={lists:META.lists,stages:META.stages,goal:META.goal,pin:META.pin,ai:META.ai};
+  const emptyIds=['main','featured','pcontent','stats','goal','strip','idea','aiout'];
+  const savedInner={};
+  emptyIds.forEach(id=>{const el=document.getElementById(id);if(el){savedInner[id]=el.innerHTML;el.innerHTML='';}});
+  const catSel=document.getElementById('cat');
+  const savedCat=catSel?catSel.innerHTML:null;
+  if(catSel)catSel.innerHTML='<option value="" data-t="Todas las categorías">Todas las categorías</option>';
+  const savedBodyClass=document.body.className;
+  document.body.className=document.body.className.replace(/\bowner\b/,'').trim();
+  const htmlEl=document.documentElement;
+  const savedLang=htmlEl.getAttribute('lang'), savedTheme=htmlEl.getAttribute('data-theme');
+  htmlEl.setAttribute('lang','es'); htmlEl.removeAttribute('data-theme');
+  const savebar=document.getElementById('savebar');
+  const savedSavebarClass=savebar?savebar.className:null;
+  if(savebar)savebar.className='savebar';
+
   let src=document.documentElement.outerHTML;
-  const emptyById=(tag,id)=>{src=src.replace(new RegExp('<'+tag+'([^>]*\\bid="'+id+'"[^>]*)>[\\s\\S]*?</'+tag+'>'),'<'+tag+'$1></'+tag+'>')};
-  emptyById('main','main');emptyById('section','featured');emptyById('div','pcontent');emptyById('div','stats');emptyById('div','goal');emptyById('div','strip');emptyById('div','idea');emptyById('div','aiout');
-  src=src.replace(/<select id="cat">[\s\S]*?<\/select>/,'<select id="cat"><option value="" data-t="Todas las categorías">Todas las categorías</option></select>').replace('<body class="owner">','<body>').replace(/<html lang="[a-z]+"( data-theme="[a-z]+")?>/,'<html lang="es">').replace(/<div id="savebar" class="savebar on">/,'<div id="savebar" class="savebar">');
+
+  emptyIds.forEach(id=>{const el=document.getElementById(id);if(el&&savedInner[id]!==undefined)el.innerHTML=savedInner[id];});
+  if(catSel&&savedCat!==null)catSel.innerHTML=savedCat;
+  document.body.className=savedBodyClass;
+  if(savedLang!=null)htmlEl.setAttribute('lang',savedLang);
+  if(savedTheme!=null)htmlEl.setAttribute('data-theme',savedTheme);else htmlEl.removeAttribute('data-theme');
+  if(savebar&&savedSavebarClass!==null)savebar.className=savedSavebarClass;
+
   src=src.replace(/const BOOKS = \[[\s\S]*?\];\n/,'const BOOKS = '+JSON.stringify(data)+';\n').replace(/const META = \{[\s\S]*?\};\n/,'const META = '+JSON.stringify(meta)+';\n');
   return '<!DOCTYPE html>\n'+src;
 }
