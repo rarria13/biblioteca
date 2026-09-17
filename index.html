@@ -555,6 +555,21 @@ function decade(y){const m=String(y).match(/\d{4}/);if(!m)return "Año por confi
 function readYear(b){if(b.ry)return String(b.ry);const m=(b.src||'').match(/(?:Audiolibros|enero|Sep|Ago|·)\D*(20\d\d)/)||(b.src||'').match(/(20\d\d)/);return m?m[1]:''}
 function badge(s){const c=s==='Leído'?'b-l':(s==='En curso'||s==='Pendiente'||s==='Recomendado')?'b-e':'b-p';return `<span class="badge ${c}">${esc(t(s))}</span>`}
 function stars(n,edit){return `<span class="stars ${edit?'edit':''}">${[1,2,3,4,5].map(i=>`<span data-r="${i}" class="${i<=(n||0)?'on':''}">★</span>`).join('')}</span>`}
+function imgFallback(img){
+  if(img.dataset.fallenBack)return;
+  img.dataset.fallenBack='1';
+  const title=img.alt||'';
+  const spine=document.createElement('div');
+  spine.className='spine';
+  spine.textContent=title;
+  const btn=img.closest('.book');
+  if(btn)btn.classList.remove('cov');
+  const cover=img.closest('.p-cover');
+  if(cover)cover.style.background='#0d1e45';
+  const parent=btn||cover||img.parentElement;
+  if(parent)parent.style.background='#0d1e45';
+  img.replaceWith(spine);
+}
 function vKey(uid){return 'vrating:'+uid}
 function getVRating(uid){try{return +(localStorage.getItem(vKey(uid))||0)}catch(e){return 0}}
 function setVRating(uid,r){try{const cur=getVRating(uid);const val=cur===r?0:r;localStorage.setItem(vKey(uid),val);return val}catch(e){return 0}}
@@ -607,7 +622,7 @@ function groups(list){
 }
 
 /* ---------- render ---------- */
-function bookEl(b){return `<button class="book ${b.s==='Leído'?'leido':''} ${b.img?'cov':''}" data-id="${b.id}" title="${esc(b.t)}" style="${b.img?'':'background:#0d1e45'}">${b.img?`<img src="${b.img}" alt="" loading="lazy">`:''}
+function bookEl(b){return `<button class="book ${b.s==='Leído'?'leido':''} ${b.img?'cov':''}" data-id="${b.id}" title="${esc(b.t)}" style="${b.img?'':'background:#0d1e45'}">${b.img?`<img src="${b.img}" alt="${esc(b.t)}" loading="lazy" onerror="imgFallback(this)">`:''}
         ${isTop(b)?'<span class="topmark">★</span>':''}${OWNER?`<span class="camb" data-cam="${b.id}" title="Poner portada: toca para elegir imagen, o arrastra una imagen aquí">📷</span><span class="delb" data-del="${b.id}" title="Eliminar este libro de la biblioteca">🗑️</span><span class="yrb ${(yearList()||{books:[]}).books.includes(b.uid)?'on':''}" data-yr="${b.id}" title="${(yearList()||{books:[]}).books.includes(b.uid)?t('Quitar de 2026'):t('Leer en 2026')}">${(yearList()||{books:[]}).books.includes(b.uid)?'−':'＋'}</span>`:''}<span class="spine"><span class="t">${esc(b.t)}</span><span class="a">${esc(b.a.split(' y ')[0].split(',')[0])}</span></span></button>`}
 function byUid(u){return BOOKS.find(b=>b.uid===u)}
 function dailyTop3(){
@@ -795,7 +810,7 @@ function openBook(id){
   const rel=related(b);
   document.getElementById('pcontent').innerHTML=`<div class="p-grid">
     <div class="p-side">
-      <div class="p-cover" style="${b.img?'':'background:#0d1e45'}">${b.img?`<img src="${b.img}" alt="">`:`<div class="spine">${esc(b.t)}</div>`}</div>
+      <div class="p-cover" style="${b.img?'':'background:#0d1e45'}">${b.img?`<img src="${b.img}" alt="${esc(b.t)}" onerror="imgFallback(this)">`:`<div class="spine">${esc(b.t)}</div>`}</div>
       <div>
       <div class="rating" data-id="${id}">${stars(b.r,OWNER)} ${b.again?'<span class="again">${t("Lo releería")}</span>':''}${OWNER?`<button class="btn tiny ${b.again?'on':''}" onclick="upd(BOOKS[${id}],{again:${!b.again}});render();openBook(${id})">${b.again?'✓ Lo releería':'¿Lo releerías?'}</button>`:''}</div>
       <div class="vrating" data-uid="${b.uid}"><span class="vlabel">${t("Tu calificación")}</span>${vstars(getVRating(b.uid))}</div>
