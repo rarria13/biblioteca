@@ -1,0 +1,17 @@
+{
+  "name": "Biblioteca de Rafael Arria",
+  "short_name": "Mi Biblioteca",
+  "description": "Los libros que han formado a Rafael Arria, con aprendizajes clave y un asistente de lectura por IA.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0d1e45",
+  "theme_color": "#0d1e45",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
