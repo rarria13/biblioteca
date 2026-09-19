@@ -1141,7 +1141,7 @@ function gbRender(){
   list.innerHTML=GB_ENTRIES.map(e=>`<div class="gb-entry" data-id="${e.id}">
     <div class="gbe-head"><b>${esc(e.name)}</b><span class="gbe-date">${new Date(e.ts).toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})}</span></div>
     <p>${esc(e.message)}</p>
-    <div class="gbe-actions"><button class="gb-like" data-like="${e.id}" ${GB_LIKED.includes(e.id)?'disabled':''}>👍 ${e.likes||0}</button>${OWNER?`<button class="gb-del" data-del="${e.id}">Eliminar</button>`:''}</div>
+    <div class="gbe-actions"><button class="gb-like" data-like="${e.id}" ${GB_LIKED.includes(e.id)?'disabled':''}>👍 ${e.likes||0}</button>${OWNER?`<button class="gb-del" data-gbdel="${e.id}">Eliminar</button>`:''}</div>
   </div>`).join('');
 }
 async function gbLoad(){
@@ -1186,10 +1186,10 @@ document.getElementById('gbList')?.addEventListener('click',async e=>{
     }catch(err){}
     return;
   }
-  const delBtn=e.target.closest('[data-del]');
+  const delBtn=e.target.closest('[data-gbdel]');
   if(delBtn&&OWNER){
     if(!confirm('¿Eliminar esta firma de la bitácora?'))return;
-    const id=delBtn.dataset.del;
+    const id=delBtn.dataset.gbdel;
     try{
       const r=await fetch(GB_PROXY,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete',id,pin:META.pin})});
       const j=await r.json(); if(!r.ok)throw new Error((j.error&&j.error.message)||r.status);
