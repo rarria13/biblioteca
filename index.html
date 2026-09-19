@@ -744,16 +744,18 @@ async function askAI(q){
   q=q||document.getElementById('aiq').value.trim(); if(!q)return; document.getElementById('aiq').value=q;
   const out=document.getElementById('aiout'), cfg=aiConfig();
   if(!cfg.key&&!cfg.proxy){out.innerHTML=`<div class="msg">El asistente aún no está conectado.${OWNER?' Entra a <b>Listas y ajustes → Asistente de lectura</b> y pega tu clave de la API de Anthropic (queda solo en este navegador) o la URL del proxy.':' Rafael lo activará pronto; mientras tanto usa el buscador de abajo, que también busca dentro de los aprendizajes.'}</div>`;return}
-  out.innerHTML='<div class="msg thinking">Revisando la biblioteca…</div>'; document.getElementById('aibtn').disabled=true;
+  out.innerHTML='<div class="msg thinking">Revisando la biblioteca… (puede tardar unos segundos)</div>'; document.getElementById('aibtn').disabled=true;
   const system=`Eres el asistente de lectura de la biblioteca personal de Rafael Arria (empresario de logística en Monterrey, profesor de negocios y ventas en el Tec de Monterrey y EGADE, ex oficial naval, triatleta). Responde en español, breve y concreto (máximo ~180 palabras), en prosa o lista corta. Recomienda primero libros que estén en la biblioteca y escribe cada título de la biblioteca EXACTAMENTE como aparece en el catálogo, entre dobles corchetes, por ejemplo [[Hábitos atómicos]]. Usa los aprendizajes del catálogo para explicar por qué recomiendas cada libro. Si la biblioteca no cubre bien el tema, puedes sugerir 1-2 libros externos marcándolos como "(fuera de la biblioteca)". No inventes títulos ni aprendizajes.\n\nCATÁLOGO (título | autor | categoría | estatus | calificación | aprendizajes):\n`+catalog();
   const body={model:cfg.model,max_tokens:700,system,messages:[{role:'user',content:q}]};
+  const ctrl=new AbortController(); const timeoutId=setTimeout(()=>ctrl.abort(),30000);
   try{
-    const r=await fetch(cfg.proxy||'https://api.anthropic.com/v1/messages',{method:'POST',headers:Object.assign({'Content-Type':'application/json'},cfg.proxy?{}:{'x-api-key':cfg.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}),body:JSON.stringify(body)});
+    const r=await fetch(cfg.proxy||'https://api.anthropic.com/v1/messages',{method:'POST',signal:ctrl.signal,headers:Object.assign({'Content-Type':'application/json'},cfg.proxy?{}:{'x-api-key':cfg.key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'}),body:JSON.stringify(body)});
+    clearTimeout(timeoutId);
     const j=await r.json(); if(!r.ok) throw new Error((j.error&&j.error.message)||r.status);
     const text=(j.content||[]).filter(x=>x.type==='text').map(x=>x.text).join('\n');
     const found=[]; const html=esc(text).replace(/\[\[(.+?)\]\]/g,(m,t)=>{const b=BOOKS.find(x=>x.t===t)||BOOKS.find(x=>x.t.toLowerCase().startsWith(t.toLowerCase()));if(b){if(!found.includes(b))found.push(b);return `<a href="#libro=${slug(b.t)}">${esc(b.t)}</a>`}return esc(t)});
     out.innerHTML=`<div class="msg">${html}</div>${found.length?`<div class="frow">${found.map(bookEl).join('')}</div>`:''}`;
-  }catch(e){out.innerHTML=`<div class="msg">No pude consultar al asistente: ${esc(e.message)}</div>`}
+  }catch(e){clearTimeout(timeoutId);out.innerHTML=e.name==='AbortError'?'<div class="msg">El asistente está tardando más de lo normal. Intenta de nuevo en un momento.</div>':`<div class="msg">No pude consultar al asistente: ${esc(e.message)}</div>`}
   document.getElementById('aibtn').disabled=false;
 }
 document.getElementById('aiout').addEventListener('click',e=>{const a=e.target.closest('a[href^="#libro="]');if(a){e.preventDefault();location.hash=a.getAttribute('href');return}const el=e.target.closest('[data-id]');if(el)openBook(+el.dataset.id)});
