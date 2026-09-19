@@ -1,4 +1,4 @@
-const CACHE_NAME = "biblioteca-rafael-v1";
+const CACHE_NAME = "biblioteca-rafael-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -24,22 +24,21 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Red primero: siempre intenta traer la version mas nueva del servidor.
+// Solo usa la copia guardada si no hay conexion a internet.
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
   event.respondWith(
-    caches.match(req).then((cached) => {
-      const network = fetch(req)
-        .then((res) => {
-          if (res && res.status === 200 && res.type === "basic") {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(req)
+      .then((res) => {
+        if (res && res.status === 200 && res.type === "basic") {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+        }
+        return res;
+      })
+      .catch(() => caches.match(req))
   );
 });
